@@ -1,8 +1,11 @@
-import csv
-
 from fastapi import FastAPI
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from Entities import Movie, Link, Rating, Tag
 
 app = FastAPI()
+engine = create_engine('sqlite:///movies.db')
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @app.get("/")
@@ -10,75 +13,41 @@ def hello_world():
     return {"Hello": "World"}
 
 
-class Movie:
-    def __init__(self, movieId, title, genres):
-        self.movieId = movieId
-        self.title = title
-        self.genres = genres
-
-
 @app.get('/movies')
 def get_movies():
-    movies = []
-    with open('movies.csv', newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            movie = Movie(row['movieId'], row['title'], row['genres'])
-            movies.append(movie.__dict__)
-    return movies
-
-
-class Link:
-    def __init__(self, movieId, imdbId, tmdbId):
-        self.movieId = movieId
-        self.imdbId = imdbId
-        self.tmdbId = tmdbId
+    session = SessionLocal()
+    try:
+        movies = session.query(Movie).all()
+        return [m.__dict__ for m in movies]
+    finally:
+        session.close()
 
 
 @app.get('/links')
 def get_links():
-    links = []
-    with open('links.csv', newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            link = Link(row['movieId'], row['imdbId'], row['tmdbId'])
-            links.append(link.__dict__)
-    return links
-
-
-class Rating:
-    def __init__(self, userId, movieId, rating, timestamp):
-        self.userId = userId
-        self.movieId = movieId
-        self.rating = rating
-        self.timestamp = timestamp
+    session = SessionLocal()
+    try:
+        links = session.query(Link).all()
+        return [l.__dict__ for l in links]
+    finally:
+        session.close()
 
 
 @app.get('/ratings')
 def get_ratings():
-    ratings = []
-    with open('ratings.csv', newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            rating = Rating(row['userId'], row['movieId'], row['rating'], row['timestamp'])
-            ratings.append(rating.__dict__)
-    return ratings
-
-
-class Tag:
-    def __init__(self, userId, movieId, tag, timestamp):
-        self.userId = userId
-        self.movieId = movieId
-        self.tag = tag
-        self.timestamp = timestamp
+    session = SessionLocal()
+    try:
+        ratings = session.query(Rating).all()
+        return [r.__dict__ for r in ratings]
+    finally:
+        session.close()
 
 
 @app.get('/tags')
 def get_tags():
-    tags = []
-    with open('tags.csv', newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            tag = Rating(row['userId'], row['movieId'], row['tag'], row['timestamp'])
-            tags.append(tag.__dict__)
-    return tags
+    session = SessionLocal()
+    try:
+        tags = session.query(Tag).all()
+        return [t.__dict__ for t in tags]
+    finally:
+        session.close()
