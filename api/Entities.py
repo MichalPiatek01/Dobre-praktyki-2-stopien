@@ -32,3 +32,12 @@ class Tag(Base):
     movieId = Column(Integer, primary_key=True)
     tag = Column(String, primary_key=True)
     timestamp = Column(Integer)
+
+
+class User(Base):
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    hashed_password = Column(String, nullable=False)
+    roles = Column(String, nullable=False, default="ROLE_USER")
