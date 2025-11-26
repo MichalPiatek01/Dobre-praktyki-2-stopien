@@ -67,7 +67,6 @@ def get_token(client: TestClient, username: str, password: str) -> str:
     return data["access_token"]
 
 
-
 def test_login_success(client: TestClient):
     resp = client.post(
         "/login",
@@ -152,3 +151,179 @@ def test_get_movies_requires_auth(client: TestClient):
     token = get_token(client, "user", "user123")
     resp = client.get("/movies", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
+
+
+def test_movies_crud(client: TestClient):
+    token = get_token(client, "user", "user123")
+
+    # CREATE
+    resp = client.post(
+        "/movies",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "movieId": 1001,
+            "title": "Test Movie",
+            "genres": "Action",
+        },
+    )
+    assert resp.status_code == 201
+    movie = resp.json()
+    assert movie["title"] == "Test Movie"
+    movie_id = movie["movieId"]
+
+    # READ
+    resp = client.get(f"/movies/{movie_id}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 200
+    assert resp.json()["movieId"] == movie_id
+
+    # UPDATE
+    resp = client.put(
+        f"/movies/{movie_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "movieId": movie_id,
+            "title": "Updated Movie",
+            "genres": "Drama",
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["title"] == "Updated Movie"
+
+    # DELETE
+    resp = client.delete(f"/movies/{movie_id}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 204
+
+    # READ AFTER DELETE
+    resp = client.get(f"/movies/{movie_id}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 404
+
+
+def test_links_crud(client: TestClient):
+    token = get_token(client, "user", "user123")
+
+    # CREATE
+    resp = client.post(
+        "/links",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "movie_id": 1,
+            "imdb_id": "tt999",
+            "tmdb_id": "tmdb777",
+        },
+    )
+    assert resp.status_code == 201
+    link_id = resp.json()["movieId"]
+
+    # READ
+    resp = client.get(f"/links/{link_id}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 200
+
+    # UPDATE
+    resp = client.put(
+        f"/links/{link_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "movie_id": link_id,
+            "imdb_id": "ttUPDATED",
+            "tmdb_id": "tmdbUPDATED",
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["imdb_id"] == "ttUPDATED"
+
+    # DELETE
+    resp = client.delete(f"/links/{link_id}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 204
+
+    # READ AFTER DELETE
+    resp = client.get(f"/links/{link_id}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 404
+
+
+def test_ratings_crud(client: TestClient):
+    token = get_token(client, "user", "user123")
+
+    # CREATE
+    resp = client.post(
+        "/ratings",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "userId": 1,
+            "movieId": 1,
+            "rating": 4.5,
+        },
+    )
+    assert resp.status_code == 201
+    rating_user_id = resp.json()["userId"]
+    rating_movie_id = resp.json()["movieId"]
+
+    # READ
+    resp = client.get(f"/ratings/{rating_user_id}/{rating_movie_id}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 200
+    assert resp.json()["rating"] == 4.5
+
+    # UPDATE
+    resp = client.put(
+        f"/ratings/{rating_user_id}/{rating_movie_id}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "userId": rating_user_id,
+            "movieId": rating_movie_id,
+            "rating": 3.0,
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["rating"] == 3.0
+
+    # DELETE
+    resp = client.delete(f"/ratings/{rating_user_id}/{rating_movie_id}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 204
+
+    # READ AFTER DELETE
+    resp = client.get(f"/ratings/{rating_user_id}/{rating_movie_id}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 404
+
+
+def test_tags_crud(client: TestClient):
+    token = get_token(client, "user", "user123")
+
+    # CREATE
+    resp = client.post(
+        "/tags",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "userId": 1,
+            "movieId": 1,
+            "tag": "Adventure",
+        },
+    )
+    assert resp.status_code == 201
+    tag_user_id = resp.json()["userId"]
+    tag_movie_id = resp.json()["movieId"]
+    tag_name = resp.json()["tag"]
+
+    # READ
+    resp = client.get(f"/tags/{tag_user_id}/{tag_movie_id}/{tag_name}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 200
+    assert resp.json()["tag"] == "Adventure"
+
+    # UPDATE
+    resp = client.put(
+        f"/tags/{tag_user_id}/{tag_movie_id}/{tag_name}",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "userId": tag_user_id,
+            "movieId": tag_movie_id,
+            "tag": "UpdatedTag",
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["tag"] == "UpdatedTag"
+
+    # DELETE
+    resp = client.delete(f"/tags/{tag_user_id}/{tag_movie_id}/{tag_name}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 204
+
+    # READ AFTER DELETE
+    resp = client.get(f"/tags/{tag_user_id}/{tag_movie_id}/{tag_name}", headers={"Authorization": f"Bearer {token}"})
+    assert resp.status_code == 404
