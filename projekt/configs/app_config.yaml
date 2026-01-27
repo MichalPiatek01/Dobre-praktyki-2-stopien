@@ -1,0 +1,19 @@
+detector:
+  type: "yolo"
+
+  # --- yolo params
+  weights: "runs/detect/plate/weights/best.pt"
+  conf: 0.25
+  iou: 0.45
+  img_size: 640
+
+ocr:
+  engine: "easyocr"
+  languages: ["en"]
+  tesseract_lang: "eng"
+
+postprocess:
+  uppercase: true
+  strip_spaces: true
+  allowed_chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  plate_regex: "^[A-Z]{1,3}[A-Z0-9]{4,5}$"
